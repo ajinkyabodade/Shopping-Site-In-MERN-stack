@@ -31,15 +31,15 @@ exports.signup =(req,res)=> {
 
 
 exports.signin=(req,res)=> {
-   const {email,password} = req.body; //Destructuring
    const errors = validationResult(req); 
 
-   if(!errors.isEmpty()){
-    return res.status(422).json({
-        errors
-    })
+    if(!errors.isEmpty()){
+        return res.status(422).json({
+            errors
+        })
     }
 
+    const {email,password} = req.body; //Destructuring
     User.findOne({email},(err,user)=>{
         if(err || !user){
             return res.status(400).json({
@@ -47,7 +47,7 @@ exports.signin=(req,res)=> {
             })
         }
         
-        if(!user.authenticate(password)){ //??
+        if(!user.authenticate(password)){ 
             return res.status(401).json({
                 error:"Email and password do not match"
             })
@@ -61,7 +61,7 @@ exports.signin=(req,res)=> {
         //Send response to frontend
         const {_id,name,email,role} = user;
         return res.json({
-            token,user:{_id,name,email,role} //??
+            token,user:{_id,name,email,role} 
         });
 
     })
@@ -86,15 +86,15 @@ exports.isSignedIn = expressJwt({ //express middleware
 
 
 //custom middleweares
-exports.isAuthenticated = (req,res)=>{
-    let checker = req.profile && req.auth && req.profile._id === req.auth._id;
+exports.isAuthenticated = (req,res,next)=>{
+    let checker = req.profile && req.auth && req.profile._id == req.auth._id;
     if(!checker){
-        return res.send(403).json({
+        return res.status(403).json({
             error:"ACCESS DENIED"
-        })
+        });
     }
     next();
-}
+};
 
 exports.isAdmin = (req,res)=>{
     if(req.profile.role===0){
