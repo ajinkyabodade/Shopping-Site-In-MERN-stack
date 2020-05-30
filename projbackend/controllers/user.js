@@ -1,4 +1,5 @@
 const User =require("../models/user");
+const Order =require("../models/order");
 
 
 exports.getUserById = (req,res,next,id)=>{
@@ -44,6 +45,53 @@ exports.updateUser = (req,res)=>{
             }
     );
 };  
+
+
+exports.userPurchaseList=(req,res)=>{
+    Order.find({user:req.profile._id})
+    .populate("user", "_id name")
+    .exec((err,order)=>{
+        if(err){
+            return res.staus(400).json({
+                error:"No orders found"
+            })
+        }
+        return res.json(order);
+    })
+}
+
+
+exports.pushOrderInPurchaseList = (req,res,next)=>{
+    let purchases =[];
+    req.body.order.products.forEach(product =>{
+        purchases.push({
+            _id: product._id,
+            name: product.name,
+            description:product.description,
+            category: product.category,
+            quantity:product.quantity,
+            amount:req.body.order.amount,
+            transaction_id:req.body.order.transaction_id
+        })
+    })
+
+    //Store in DB
+    User.findOneAndUpdate(
+        {_id:req.profile._id},
+        {$push:{purchases:purchases} },
+        {new:true}, //Send me back the updated object form db
+        (err,purchases)=>{
+            if(err){
+                return res.status(400).json({
+                    error:"Unable to save purchase list"
+                })
+            }
+            next();
+        }
+    ) 
+};
+
+
 
 //Example not used
 // exports.getAllUsers = (req,res)=>{
